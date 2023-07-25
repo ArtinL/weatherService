@@ -1,4 +1,5 @@
 import express from 'express';
+import axios from 'axios';
 
 const app = express();
 
@@ -14,17 +15,10 @@ const DEFAULT_FILTERS = 'temp,condition,feels_like,humidity,visibility,wind_spee
 app.get('/:mode', async (req, res) => {
     const mode = req.params.mode;
     try {
-        if (mode !== 'current' && mode !== 'forecast') throw new Error('Invalid request: Unknown query');
+        if (mode !== 'current' && mode !== 'forecast') throw new Error('Invalid request: Unknown path');
         const currentFlag = mode === 'current';
 
-        const [{ lat, lon }] = await getGeoCoords(req);
-
-
-        const url = currentFlag ? WEATHER_CURRENT_URL : WEATHER_FORECAST_URL;
-        const weatherResponse = await fetch(`${url}lat=${lat}&lon=${lon}&appid=${API_KEY}`);
-
-        const weatherDataArr = currentFlag ? [await weatherResponse.json()] : (await weatherResponse.json()).list;
-
+        const weatherDataArr = await getWeatherData(req, currentFlag);
 
         const filterString = req.query.filters || DEFAULT_FILTERS;
         const filterArr = validateFilters(filterString);
@@ -40,18 +34,27 @@ app.get('/:mode', async (req, res) => {
 });
 
 
+async function getWeatherData(req, currentFlag) {
+    const [{ lat, lon }] = await getGeoCoords(req);
+
+    const url = currentFlag ? WEATHER_CURRENT_URL : WEATHER_FORECAST_URL;
+    const weatherResponse = await axios.get(`${url}lat=${lat}&lon=${lon}&appid=${API_KEY}`);
+
+    return currentFlag ? [weatherResponse.data] : weatherResponse.data.list;
+}
+
 async function getGeoCoords(req) {
     const city = req.query.city || '';
     const state = req.query.state || '';
     const country = req.query.country || 'US';
     const zip = req.query.zip || '';
 
-
     if ((!city && !zip) || (city && !state)) throw new Error('Invalid request: Bad location information');
 
-    const geoLocationData = await fetch(`${GEODECODE_URL}city=${city}&state=${state}&country=${country}&postalcode=${zip}`);
-    return await geoLocationData.json();
+    const geoLocationData = await axios.get(`${GEODECODE_URL}city=${city}&state=${state}&country=${country}&postalcode=${zip}`);
+    return geoLocationData.data;
 }
+
 
 function getFilteredData(weatherDataArr, filterArr) {
     const filteredDataArr = weatherDataArr.map((weatherData) => {
@@ -100,8 +103,8 @@ function validateFilters(filters) {
     return filterArr;
 }
 
-const port = process.env.PORT || 3000;
+const port = process.env.PORT || 8080;
 
 app.listen(port, () => {
-    console.log('Server is listening on port 3000');
+    console.log(`Server is listening on port ${port}`);
 });
