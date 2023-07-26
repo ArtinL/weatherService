@@ -1,45 +1,11 @@
 import axios from "axios";
 
 const GEODECODE_URL = " https://geocode.maps.co/search?";
-const OW_CURRENT_URL = "https://api.openweathermap.org/data/2.5/weather?";
-const OW_FORECAST_URL = "https://api.openweathermap.org/data/2.5/forecast?";
-const OW_KEY = "a52f6aeb31b10bdd467e82a8bd4560f6";
-const WAPI_CURRENT_URL = "http://api.weatherapi.com/v1/current.json?";
-const WAPI_FORECAST_URL = "http://api.weatherapi.com/v1/forecast.json?";
+const WAPI_URL = "http://api.weatherapi.com/v1/forecast.json?";
 const WAPI_KEY = "aed7d618693e4f4aaaf195401232607";
 
-export async function OW_getWeatherResponse(req, mode) {
-    const [{ lat, lon }] = await getGeoCoords(req);
-
-    mode === "current" ? OW_CURRENT_URL : OW_FORECAST_URL;
-    return await axios.get(`${url}lat=${lat}&lon=${lon}&appid=${OW_KEY}`);
-
-    //return currentFlag ? [weatherResponse.data] : weatherResponse.data.list;
-}
-
-export function getFilteredData(weatherData, filterArr) {
-    const filteredData = {
-        date: new Date(weatherData.dt * 1000).toJSON(),
-    };
-    for (let filter of filterArr) {
-        filteredData[filter] = getMatchingField(weatherData, filter);
-    }
-    return filteredData;
-}
-
 export function getValidFilters(filters) {
-    const validFilters = [
-        "temp",
-        "temp_f",
-        "temp_c",
-        "condition",
-        "feels_like",
-        "feels_like_f",
-        "feels_like_c",
-        "humidity",
-        "visibility",
-        "wind_speed",
-    ];
+    const validFilters = ["temp", "condition", "feels_like", "humidity", "visibility", "wind_speed", "uv"];
 
     if (filters === "all") return validFilters;
 
@@ -65,24 +31,39 @@ async function getGeoCoords(req) {
     return geoLocationData.data;
 }
 
+export async function getWeatherResponse(req) {
+    const [{ lat, lon }] = await getGeoCoords(req);
+    const response = await axios.get(`${WAPI_URL}&key=${WAPI_KEY}&q=${lat},${lon}&days=${req.query.days || 3}&aqi=yes`);
+    return response.data;
+}
+
+export function getFilteredData(weatherData, filterArr, mode) {
+    const filteredData = {
+        //date: new Date((mode === "current" ? weatherData.last_updated_epoch : weatherData.time_epoch) * 1000).toJSON(),
+        time: mode === "current" ? weatherData.last_updated : weatherData.time,
+    };
+    for (let filter of filterArr) {
+        filteredData[filter] = getMatchingField(weatherData, filter);
+    }
+    return filteredData;
+}
+
 function getMatchingField(weatherData, filter) {
     switch (filter) {
-        case "temp" || "temp_f":
-            return Math.round((weatherData.main.temp - 273.15) * (9 / 5) + 32);
-        case "temp_c":
-            return Math.round(weatherData.main.temp - 273.15);
+        case "temp":
+            return weatherData.temp_f;
         case "condition":
-            return weatherData.weather[0].main;
-        case "feels_like" || "feels_like_f":
-            return Math.round((weatherData.main.feels_like - 273.15) * (9 / 5) + 32);
-        case "feels_like_c":
-            return Math, round(weatherData.main.feels_like - 273.15);
+            return { text: weatherData.condition.text, icon: weatherData.condition.icon };
+        case "feels_like":
+            return weatherData.feels_like_f;
         case "humidity":
-            return weatherData.main.humidity;
+            return weatherData.humidity;
         case "visibility":
-            return weatherData.visibility;
+            return weatherData.vis_miles;
         case "wind_speed":
-            return weatherData.wind.speed;
+            return weatherData.wind_mph;
+        case "uv":
+            return weatherData.uv;
         default:
             throw new Error("Filter parsing error");
     }

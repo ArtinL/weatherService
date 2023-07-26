@@ -1,26 +1,37 @@
-import { OW_getWeatherResponse, getFilteredData, getValidFilters } from "./util";
+import { getWeatherResponse, getFilteredData, getValidFilters } from "./util.js";
 
-// example city name call: /current?city=Corvallis&state=OR&filters=temp,condition,feels_like,humidity
-// example zip code call: /current?zip=97333&filters=temp,condition,feels_like,humidity
 export async function current(req) {
     const filterString = req.query.filters || "all";
     const filterArr = getValidFilters(filterString);
 
-    const weatherResponse = await OW_getWeatherResponse(req, "current");
+    const currentData = (await getWeatherResponse(req)).current;
 
-    return getFilteredData(weatherResponse.data, filterArr);
+    const filteredData = getFilteredData(currentData, filterArr, "current");
+    return filteredData;
 }
 
-export async function forecast_3h(req) {
+export async function forecast(req) {
     const filterString = req.query.filters || "all";
     const filterArr = getValidFilters(filterString);
+    const forecastData = (await getWeatherResponse(req)).forecast.forecastday;
 
-    const weatherResponse = await OW_getWeatherResponse(req, "forecast_3h");
+    const filteredForecastData = [];
+    for (let forecastDay of forecastData) {
+        const filteredDay = {
+            day: {
+                date: forecastDay.date,
+                max_temp: forecastDay.day.maxtemp_f,
+                min_temp: forecastDay.day.mintemp_f,
+                condition: {
+                    text: forecastDay.day.condition.text,
+                    icon: forecastDay.day.condition.icon,
+                },
+            },
+            hour: forecastDay.hour.map((hour) => getFilteredData(hour, filterArr, "forecast")),
+        };
 
-    const filteredData = [];
-    for (const weatherData of weatherResponse.data.list) {
-        filteredData.push(getFilteredData(weatherData, filterArr));
+        filteredForecastData.push(filteredDay);
     }
 
-    return filteredData;
+    return filteredForecastData;
 }

@@ -1,7 +1,6 @@
 import express from "express";
 
-import { getValidFilters } from "./src/util.js";
-import { current, forecast_3h } from "./src/handlers.js";
+import { current, forecast } from "./src/handlers.js";
 
 const app = express();
 
@@ -17,9 +16,9 @@ app.get("/current", async (req, res) => {
     }
 });
 
-app.get("/forecast_3h", async (req, res) => {
+app.get("/forecast", async (req, res) => {
     try {
-        res.send(await forecast_3h(req));
+        res.send(await forecast(req));
     } catch (err) {
         res.status(400).send(err.message);
     }
