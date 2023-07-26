@@ -33,7 +33,8 @@ async function getGeoCoords(req) {
 
 export async function getWeatherResponse(req) {
     const [{ lat, lon }] = await getGeoCoords(req);
-    const response = await axios.get(`${WAPI_URL}&key=${WAPI_KEY}&q=${lat},${lon}&days=${req.query.days || 3}&aqi=yes`);
+    const days = req.query.days && req.query.days > 0 && req.query.days <= 3 ? req.query.days : 3;
+    const response = await axios.get(`${WAPI_URL}&key=${WAPI_KEY}&q=${lat},${lon}&days=${days}&aqi=yes`);
     return response.data;
 }
 
