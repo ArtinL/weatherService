@@ -23,7 +23,8 @@ async function getGeoCoords(req) {
     const country = req.query.country || "US";
     const zip = req.query.zip || "";
 
-    if ((!city && !zip) || (city && !state)) throw new Error("Invalid request: Bad location information");
+    if ((!city && !zip) || (city && ((country == "US" && !state) || (country != "US" && state))))
+        throw new Error("Invalid request: Bad location information");
 
     const geoLocationData = await axios.get(
         `${GEODECODE_URL}city=${city}&state=${state}&country=${country}&postalcode=${zip}`
