@@ -23,7 +23,7 @@ if (response.ok)
 
 ## Using the service 
 
-The service includes 7 points of weather data: `time`, specifying when the weather data was collected, `temp` in °F, weather `conditions` (e.g. Sunny, Partly Cloudy, etc.) along with a link to a visual icon, `humidity` in %, `visibility` in miles, `wind_speed` in miles per hour, and `UV` in UVI units.
+The service includes 7 points of weather data: `time`, specifying when the weather data was collected, `temp` in °F, weather `condition` (e.g. Sunny, Partly Cloudy, etc.) along with a link to a visual icon, `humidity` in %, `visibility` in miles, `wind_speed` in miles per hour, and `UV` in UVI units.
 
 ### Endpoints
 
