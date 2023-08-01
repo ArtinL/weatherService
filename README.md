@@ -68,8 +68,16 @@ Example response:
     },
     "hour": [
       {
-        "time": "2023-07-30 00:00",
-        "..."
+        "time": "2023-07-31 00:00",
+        "temp": 55.6,
+        "condition": {
+          "text": "Clear",
+          "icon": "//cdn.weatherapi.com/weather/64x64/night/113.png"
+        },
+        "humidity": 83,
+        "visibility": 6,
+        "wind_speed": 3.8,
+        "uv": 1
       },
       {"..."},
       "..."
