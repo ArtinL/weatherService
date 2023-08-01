@@ -1,4 +1,5 @@
 import axios from "axios";
+import _ from "lodash";
 
 const GEODECODE_URL = " https://geocode.maps.co/search?";
 const WAPI_URL = "http://api.weatherapi.com/v1/forecast.json?";
@@ -10,6 +11,9 @@ export function getValidFilters(filters) {
     if (filters === "all") return validFilters;
 
     const filterArr = filters.split(",");
+
+    //const x = validFilters.every((filter) => filterArr.includes(filter));
+
     for (const filter of filterArr) {
         if (!validFilters.includes(filter)) throw new Error("Invalid request: Bad filters");
     }
@@ -40,33 +44,21 @@ export async function getWeatherResponse(req) {
 }
 
 export function getFilteredData(weatherData, filterArr, mode) {
-    const filteredData = {
-        //date: new Date((mode === "current" ? weatherData.last_updated_epoch : weatherData.time_epoch) * 1000).toJSON(),
+    const fields = {
         time: mode === "current" ? weatherData.last_updated : weatherData.time,
+        temp: weatherData.temp_f,
+        condition: {
+            text: weatherData.condition.text,
+            icon: weatherData.condition.icon,
+        },
+        feels_like: weatherData.feels_like_f,
+        humidity: weatherData.humidity,
+        visibility: weatherData.vis_miles,
+        wind_speed: weatherData.wind_mph,
+        uv: weatherData.uv,
     };
-    for (let filter of filterArr) {
-        filteredData[filter] = getMatchingField(weatherData, filter);
-    }
-    return filteredData;
-}
 
-function getMatchingField(weatherData, filter) {
-    switch (filter) {
-        case "temp":
-            return weatherData.temp_f;
-        case "condition":
-            return { text: weatherData.condition.text, icon: weatherData.condition.icon };
-        case "feels_like":
-            return weatherData.feels_like_f;
-        case "humidity":
-            return weatherData.humidity;
-        case "visibility":
-            return weatherData.vis_miles;
-        case "wind_speed":
-            return weatherData.wind_mph;
-        case "uv":
-            return weatherData.uv;
-        default:
-            throw new Error("Filter parsing error");
-    }
+    const selectedFields = _.pick(fields, filterArr);
+
+    return selectedFields;
 }
